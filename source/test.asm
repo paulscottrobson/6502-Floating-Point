@@ -24,7 +24,7 @@ docmd 	.macro
 Skip_\2:
 		.endm
 
-		* = $2000
+		* = $1000
 Startup:
 		lda 	#FPCode & $FF
 		sta 	addr
@@ -52,12 +52,7 @@ NoCarry:
 		beq 	TestZero
 		cmp 	#cmd_halt
 Error:		
-		bne 	Error
-		lda 	#$FF
-		tax
-		tay
-		nop
-		
+		bne 	Error		
 		.byte 	2
 		;
 		;		Copy six following bytes into B.
@@ -72,7 +67,7 @@ _CILoop:lda 	(addr),y
 		adc 	#6
 		sta 	addr
 		bcc 	CheckLoop
-		inc 	addr
+		inc 	addr+1
 		bra 	CheckLoop
 
 w1:		bra 	w1			
@@ -91,8 +86,16 @@ TestZero:
 		;
 TestNearZero:		
 		lda 	fpa+4
-		cmp 	#$73
-		bcc 	CheckLoop
+		beq 	CheckLoop
+		sec
+		sbc 	fpb+4
+		bpl 	_TNZAbs
+		eor 	#$FF
+		inc 	a
+_TNZAbs:		
+		cmp 	#$10
+		bcs 	CheckLoop
+		nop
 		lda 	#1
 		ldx 	addr
 		ldy 	addr+1
@@ -100,9 +103,8 @@ TestNearZero:
 
 Stop:	bra 	Stop
 
-		* = $4000
 		.include "floatingpoint.asm"
-		* = $8000
+		* = $2000
 		.include "code.inc"
 		
 		* = $FFFC

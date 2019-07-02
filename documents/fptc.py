@@ -53,6 +53,7 @@ class Compiler(object):
 		text = [x.strip().lower() for x in " ".join(text).split(" ") if x.strip() != ""]
 		text.append("halt")
 		src = []
+		self.size = 0
 
 		for c in self.commands.keys():
 			name = self.commands[c]["name"].replace(">","_to_").replace("==","exact")
@@ -91,21 +92,24 @@ class Compiler(object):
 				byte.append(sign)
 			bl = ",".join([str(x) for x in byte])
 			src.append("\t.byte {0:32} ; {1:4} {2}".format(bl,cmd["name"],opcode))
+			self.size += len(byte)
+		print("Compiled {0} bytes.".format(self.size))
 		return src
 
-txt = """
-;
-;		Test compiler 
-;
-f>b  12345.6789 b>a
-f>b  12345 -
-f>b  0.6789 - 
-==0
+if __name__ == "__main__":
+	txt = """
+	;
+	;		Test compiler 
+	;
+	f>b  12345.6789 b>a
+	f>b  12345 -
+	f>b  0.6789 - 
+	==0
 
 
-""".split("\n")
-cc = Compiler()
-h = open("code.inc","w")
-h.write("\n".join(cc.compile(txt)))
-h.write("\n\n")
-h.close()
+	""".split("\n")
+	cc = Compiler()
+	h = open("code.inc","w")
+	h.write("\n".join(cc.compile(txt)))
+	h.write("\n\n")
+	h.close()
