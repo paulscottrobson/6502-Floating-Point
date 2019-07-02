@@ -1,8 +1,9 @@
 #
 #		Simple test script.
 #
+python ../documents/fptc.py
 64tass -a -b -c test.asm -o test.bin -L test.lst
-./cx16 test.bin
+../emulator/6502em test.bin go
 
 
 

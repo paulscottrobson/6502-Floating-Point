@@ -16,10 +16,10 @@ class Compiler(object):
 		self.commands = { } 
 
 		self.commands["i>b"] = { "name":"i>b" }		# place int const in fpb
-		self.commands["i>b"]["operand"] = "int" 	# followed by signed 32 bit integer
+		self.commands["i>b"]["operand"] = "int" 	# followed by signed 32 bit integer,0,0
 
 		self.commands["f>b"] = { "name":"f>b" }		# place float in fpb
-		self.commands["f>b"]["operand"] = "float"	# followed by signed float.
+		self.commands["f>b"]["operand"] = "float"	# followed by mantissa (hi bit set),exp,sign
 
 		self.commands["+"] = { "name":"+" }			# add fpb to fpa
 		self.commands["-"] = { "name":"-" }			# sub fpb to fpa
@@ -28,6 +28,9 @@ class Compiler(object):
 
 		self.commands["int"] = { "name":"int" }		# place int(fpa) in fpa
 		self.commands["frac"] = { "name":"frac" }	# place frac(fpa) in fpa
+
+		self.commands["itof"] = { "name":"itof" }	# convert fpb:int -> float
+		self.commands["ftoi"] = { "name":"ftoi" }	# convert fpb:float -> int
 
 		self.commands["=0"] = { "name":"=0"}		# true if fpa nearly equal to 0
 		self.commands["==0"] = { "name":"==0" }		# true if fpa exactly equal to 0
@@ -49,7 +52,6 @@ class Compiler(object):
 		text = [x if x.find(";") < 0 else x[:x.find(";")] for x in text]
 		text = [x.strip().lower() for x in " ".join(text).split(" ") if x.strip() != ""]
 		text.append("halt")
-
 		src = []
 
 		for c in self.commands.keys():
@@ -70,9 +72,12 @@ class Compiler(object):
 				if cmd["operand"] == "int":
 					mantissa = int(text[0])
 					exponent = 0
+					sign = 0
 					text = text[1:]
 				else:
-					fp = FloatingPoint(float(text[0]))					
+					n = float(text[0])
+					fp = FloatingPoint(abs(n))					
+					sign = 0 if n >= 0 else 1
 					mantissa = fp.mantissa
 					exponent = fp.exponent
 					text = text[1:]
@@ -83,6 +88,7 @@ class Compiler(object):
 				byte.append((mantissa >> 16) & 0xFF)
 				byte.append((mantissa >> 24) & 0xFF)
 				byte.append(exponent)
+				byte.append(sign)
 			bl = ",".join([str(x) for x in byte])
 			src.append("\t.byte {0:32} ; {1:4} {2}".format(bl,cmd["name"],opcode))
 		return src
@@ -91,7 +97,11 @@ txt = """
 ;
 ;		Test compiler 
 ;
-=0 ==0 a>$ i>b 42 i>b -1 f>b 0 f>b 16.1
+f>b  12345.6789 b>a
+f>b  12345 -
+f>b  0.6789 - 
+==0
+
 
 """.split("\n")
 cc = Compiler()

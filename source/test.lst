@@ -1,16 +1,275 @@
 
 ; 64tass Turbo Assembler Macro V1.54.1900 listing file
 ; 64tass -a -b -c -o test.bin -L test.lst test.asm
-; Sat Jun 29 23:02:00 2019
+; Tue Jul  2 19:23:49 2019
 
 ;Offset	;Hex		;Monitor	;Source
 
 ;******  Processing input file: test.asm
 
 .0000	ea		nop				nop
-.2000	1a		inc a		Startup:inc	a
-.2001	ea		nop				nop
-.2002	80 fe		bra $2002	w1:		bra 	w1
+=$08					fpa		= $08
+=$10					fpb		= $10
+=$04					addr 	= $04
+.2000					Startup:
+.2000	a9 00		lda #$00			lda 	#FPCode & $FF
+.2002	85 04		sta $04				sta 	addr
+.2004	a9 80		lda #$80			lda 	#FPCode >> 8
+.2006	85 05		sta $05				sta 	addr + 1
+.2008					CheckLoop:
+.2008	b2 04		lda ($04)			lda 	(addr)
+.200a	e6 04		inc $04				inc 	addr
+.200c	d0 02		bne $2010			bne		NoCarry
+.200e	e6 05		inc $05				inc 	addr+1
+.2010					NoCarry:
+.2010	c9 02		cmp #$02			cmp 	#cmd_f_to_b
+.2012	f0 31		beq $2045			beq 	CopyIn
+.2014	c9 01		cmp #$01			cmp 	#cmd_i_to_b
+.2016	f0 2d		beq $2045			beq 	CopyIn
+.2018	c9 0f		cmp #$0f			cmp 	#cmd_b_to_a
+.201a	d0 05		bne $2021			bne 	Skip_Float_COPY_BToA
+.201c	20 85 40	jsr $4085			jsr 	Float_COPY_BToA
+.201f	80 e7		bra $2008			bra 	CheckLoop
+.2021					Skip_Float_COPY_BToA:
+.2021	c9 03		cmp #$03			cmp 	#cmd_add
+.2023	d0 05		bne $202a			bne 	Skip_Float_ADD
+.2025	20 06 40	jsr $4006			jsr 	Float_ADD
+.2028	80 de		bra $2008			bra 	CheckLoop
+.202a					Skip_Float_ADD:
+.202a	c9 04		cmp #$04			cmp 	#cmd_sub
+.202c	d0 05		bne $2033			bne 	Skip_Float_SUB
+.202e	20 00 40	jsr $4000			jsr 	Float_SUB
+.2031	80 d5		bra $2008			bra 	CheckLoop
+.2033					Skip_Float_SUB:
+.2033	c9 0b		cmp #$0b			cmp 	#cmd_equal0
+.2035	f0 32		beq $2069			beq 	TestNearZero
+.2037	c9 0c		cmp #$0c			cmp 	#cmd_exact0
+.2039	f0 23		beq $205e			beq 	TestZero
+.203b	c9 10		cmp #$10			cmp 	#cmd_halt
+.203d					Error:
+.203d	d0 fe		bne $203d			bne 	Error
+.203f	a9 ff		lda #$ff			lda 	#$FF
+.2041	aa		tax				tax
+.2042	a8		tay				tay
+.2043	ea		nop				nop
+>2044	02						.byte 	2
+.2045	a0 05		ldy #$05	CopyIn:	ldy 	#5
+.2047	b1 04		lda ($04),y	_CILoop:lda 	(addr),y
+.2049	99 10 00	sta $0010,y			sta 	fpb,y
+.204c	88		dey				dey
+.204d	10 f8		bpl $2047			bpl 	_CILoop
+.204f	a5 04		lda $04				lda 	addr
+.2051	18		clc				clc
+.2052	69 06		adc #$06			adc 	#6
+.2054	85 04		sta $04				sta 	addr
+.2056	90 b0		bcc $2008			bcc 	CheckLoop
+.2058	e6 04		inc $04				inc 	addr
+.205a	80 ac		bra $2008			bra 	CheckLoop
+.205c	80 fe		bra $205c	w1:		bra 	w1
+.205e					TestZero:
+.205e	a5 0c		lda $0c				lda 	fpa+4
+.2060	f0 a6		beq $2008			beq 	CheckLoop
+.2062	a9 00		lda #$00			lda 	#0
+.2064	a6 04		ldx $04				ldx 	addr
+.2066	a4 05		ldy $05				ldy 	addr+1
+.2068	ea		nop				nop
+.2069					TestNearZero:
+.2069	a5 0c		lda $0c				lda 	fpa+4
+.206b	c9 73		cmp #$73			cmp 	#$73
+.206d	90 99		bcc $2008			bcc 	CheckLoop
+.206f	a9 01		lda #$01			lda 	#1
+.2071	a6 04		ldx $04				ldx 	addr
+.2073	a4 05		ldy $05				ldy 	addr+1
+.2075	ea		nop				nop
+.2076	80 fe		bra $2076	Stop:	bra 	Stop
+
+;******  Processing file: floatingpoint.asm
+
+=12					fpaE = fpa + 4 								; addresses of exponents
+=20					fpbE = fpb + 4 								; (first 4 bytes is mantissa with bit 31 set if #0)
+=13					fpaSign = fpa + 5 							; sign (0 = +ve, 1 = -ve)
+=21					fpbSign = fpb + 5
+.4000					Float_SUB:
+.4000	a5 15		lda $15				lda 	fpbSign 					; flip the sign of the second, and add !
+.4002	49 01		eor #$01			eor 	#1
+.4004	85 15		sta $15				sta 	fpbSign
+.4006					Float_ADD:
+.4006	20 a0 40	jsr $40a0			jsr 	Float_NormalizeBoth 		; Normalise fpa/fpb.
+.4009					_FA_TestZero:
+.4009	a5 14		lda $14				lda 	fpbE 						; if B.E is zero, adding zero, so no change.
+.400b	f0 77		beq $4084			beq 	_FA_Exit
+.400d	a5 0c		lda $0c				lda 	fpaE 						; if A.E is zero, the result is B
+.400f	f0 70		beq $4081			beq 	_FA_CopyBToA
+.4011	20 c2 40	jsr $40c2			jsr 	Float_AlignExponents 		; align exponents
+.4014	a5 0c		lda $0c				lda 	fpaE 						; if either has zerod out, then go back
+.4016	f0 f1		beq $4009			beq 	_FA_TestZero 				; and do zero testing code.
+.4018	a5 14		lda $14				lda 	fpbE
+.401a	f0 ed		beq $4009			beq 	_FA_TestZero
+.401c	a5 0d		lda $0d				lda 	fpaSign 					; different signs.
+.401e	c5 15		cmp $15				cmp 	fpbSign
+.4020	d0 2e		bne $4050			bne 	_FA_DifferentSigns
+.4022	18		clc				clc
+.4023	a5 08		lda $08				lda 	fpa+0 						; add together.
+.4025	65 10		adc $10				adc 	fpb+0
+.4027	85 08		sta $08				sta 	fpa+0
+.4029	a5 09		lda $09				lda 	fpa+1
+.402b	65 11		adc $11				adc 	fpb+1
+.402d	85 09		sta $09				sta 	fpa+1
+.402f	a5 0a		lda $0a				lda 	fpa+2
+.4031	65 12		adc $12				adc 	fpb+2
+.4033	85 0a		sta $0a				sta 	fpa+2
+.4035	a5 0b		lda $0b				lda 	fpa+3
+.4037	65 13		adc $13				adc 	fpb+3
+.4039	85 0b		sta $0b				sta 	fpa+3
+.403b	90 0c		bcc $4049			bcc 	_FA_NoShift 				; no overflow, so no need to shift.
+.403d	e6 0c		inc $0c				inc 	fpaE 						; bump fpa-E and shift A right
+.403f	f0 5d		beq $409e			beq 	Float_Error
+.4041	46 0b		lsr $0b				lsr 	fpa+3
+.4043	66 0a		ror $0a				ror 	fpa+2
+.4045	66 09		ror $09				ror 	fpa+1
+.4047	66 08		ror $08				ror 	fpa+0
+.4049					_FA_NoShift:
+.4049	a5 0b		lda $0b				lda 	fpa+3						; set bit 3.
+.404b	09 80		ora #$80			ora 	#$80
+.404d	85 0b		sta $0b				sta 	fpa+3
+.404f	60		rts				rts
+.4050					_FA_DifferentSigns:
+.4050	38		sec				sec 								; subtract B from A
+.4051	a5 08		lda $08				lda 	fpa+0
+.4053	e5 10		sbc $10				sbc 	fpb+0
+.4055	85 08		sta $08				sta 	fpa+0
+.4057	a5 09		lda $09				lda 	fpa+1
+.4059	e5 11		sbc $11				sbc 	fpb+1
+.405b	85 09		sta $09				sta 	fpa+1
+.405d	a5 0a		lda $0a				lda 	fpa+2
+.405f	e5 12		sbc $12				sbc 	fpb+2
+.4061	85 0a		sta $0a				sta 	fpa+2
+.4063	a5 0b		lda $0b				lda 	fpa+3
+.4065	e5 13		sbc $13				sbc 	fpb+3
+.4067	85 0b		sta $0b				sta 	fpa+3
+.4069	b0 07		bcs $4072			bcs 	_FA_Normalize_Exit 		 	; if A was > B check for zero and exit.
+.406b	20 dd 40	jsr $40dd			jsr 	Float_NegateMantissa 		; negate the actual mantissa
+.406e	a5 15		lda $15				lda 	fpbSign 					; and return the sign of fpb
+.4070	85 0d		sta $0d				sta 	fpaSign
+.4072					_FA_Normalize_Exit:
+.4072	a5 08		lda $08				lda 	fpa+0 						; is the mantissa zero ?
+.4074	05 09		ora $09				ora 	fpa+1
+.4076	05 0a		ora $0a				ora 	fpa+2
+.4078	05 0b		ora $0b				ora 	fpa+3
+.407a	d0 02		bne $407e			bne 	_FA_NonZero
+.407c	85 0c		sta $0c				sta 	fpaE 						; if so, zero the exponent as they are same number
+.407e					_FA_NonZero:
+.407e	4c a0 40	jmp $40a0			jmp 	Float_NormalizeBoth
+.4081					_FA_CopyBToA:
+.4081	20 85 40	jsr $4085			jsr 	Float_COPY_BToA
+.4084					_FA_Exit:
+.4084	60		rts				rts
+.4085					Float_COPY_BToA:
+.4085	a5 10		lda $10				lda 	fpb+0
+.4087	85 08		sta $08				sta 	fpa+0
+.4089	a5 11		lda $11				lda 	fpb+1
+.408b	85 09		sta $09				sta 	fpa+1
+.408d	a5 12		lda $12				lda 	fpb+2
+.408f	85 0a		sta $0a				sta 	fpa+2
+.4091	a5 13		lda $13				lda 	fpb+3
+.4093	85 0b		sta $0b				sta 	fpa+3
+.4095	a5 14		lda $14				lda 	fpb+4
+.4097	85 0c		sta $0c				sta 	fpa+4
+.4099	a5 15		lda $15				lda 	fpb+5
+.409b	85 0d		sta $0d				sta 	fpa+5
+.409d	60		rts				rts
+.409e					Float_Error:
+.409e	80 fe		bra $409e			bra 	Float_Error
+.40a0					Float_NormalizeBoth:
+.40a0	da		phx				phx
+.40a1	a2 08		ldx #$08			ldx 	#fpa 						; normalise FPA
+.40a3	20 ad 40	jsr $40ad			jsr 	Float_NormalizeX
+.40a6	a2 10		ldx #$10			ldx 	#fpb 						; normalise FPB
+.40a8	20 ad 40	jsr $40ad			jsr 	Float_NormalizeX
+.40ab	fa		plx				plx
+.40ac	60		rts				rts
+.40ad					Float_NormalizeX:
+.40ad	b5 04		lda $04,x			lda 	4,x 						; exit if exponent is zero, means result is zero.
+.40af	f0 10		beq $40c1			beq 	_FNX_Exit
+.40b1					_FNX_Loop:
+.40b1	b5 03		lda $03,x			lda 	3,x 						; look at high byte of mantissa
+.40b3	30 0c		bmi $40c1			bmi 	_FNX_Exit 					; if high bit set, don't need to normalise.
+.40b5	16 00		asl $00,x			asl 	0,x 						; shift the mantissa left
+.40b7	36 01		rol $01,x			rol 	1,x
+.40b9	36 02		rol $02,x			rol 	2,x
+.40bb	36 03		rol $03,x			rol 	3,x
+.40bd	d6 04		dec $04,x			dec 	4,x 						; decrement the exponent
+.40bf	d0 f0		bne $40b1			bne 	_FNX_Loop 					; if we get too small, exponent is zero.
+.40c1					_FNX_Exit:
+.40c1	60		rts				rts
+.40c2					Float_AlignExponents:
+.40c2	da		phx				phx
+.40c3					_FAE_Loop:
+.40c3	a5 0c		lda $0c				lda 	fpaE 						; exponents the same ?
+.40c5	c5 14		cmp $14				cmp 	fpbE
+.40c7	f0 12		beq $40db			beq 	_FAE_Exit 					; if the same then exit.
+.40c9	a2 08		ldx #$08			ldx 	#fpa 						; if fpaE < fpbE then bump fpa
+.40cb	90 02		bcc $40cf			bcc 	_FAE_Shift
+.40cd	a2 10		ldx #$10			ldx 	#fpb 						; if fpbE > fpaE then bump fpb
+.40cf					_FAE_Shift:
+.40cf	56 03		lsr $03,x			lsr 	3,x
+.40d1	76 02		ror $02,x			ror 	2,x
+.40d3	76 01		ror $01,x			ror 	1,x
+.40d5	76 00		ror $00,x			ror 	0,x
+.40d7	f6 04		inc $04,x			inc 	4,x 						; increment exponent
+.40d9	d0 e8		bne $40c3			bne 	_FAE_Loop 					; underflowed, so drop out.
+.40db					_FAE_Exit:
+.40db	fa		plx				plx
+.40dc	60		rts				rts
+.40dd					Float_NegateMantissa:
+.40dd	38		sec				sec
+.40de	a9 00		lda #$00			lda 	#0
+.40e0	e5 08		sbc $08				sbc 	fpa+0
+.40e2	85 08		sta $08				sta 	fpa+0
+.40e4	a9 00		lda #$00			lda 	#0
+.40e6	e5 09		sbc $09				sbc 	fpa+1
+.40e8	85 09		sta $09				sta 	fpa+1
+.40ea	a9 00		lda #$00			lda 	#0
+.40ec	e5 0a		sbc $0a				sbc 	fpa+2
+.40ee	85 0a		sta $0a				sta 	fpa+2
+.40f0	a9 00		lda #$00			lda 	#0
+.40f2	e5 0b		sbc $0b				sbc 	fpa+3
+.40f4	85 0b		sta $0b				sta 	fpa+3
+.40f6	60		rts				rts
+
+;******  Return to file: test.asm
+
+
+;******  Processing file: code.inc
+
+=1					cmd_i_to_b = 1
+=2					cmd_f_to_b = 2
+=3					cmd_add = 3
+=4					cmd_sub = 4
+=5					cmd_mul = 5
+=6					cmd_div = 6
+=7					cmd_int = 7
+=8					cmd_frac = 8
+=9					cmd_itof = 9
+=10					cmd_ftoi = 10
+=11					cmd_equal0 = 11
+=12					cmd_exact0 = 12
+=13					cmd_a_to_buffer = 13
+=14					cmd_buffer_to_a = 14
+=15					cmd_b_to_a = 15
+=16					cmd_halt = 16
+.8000					FPCode:
+>8000	02 31 b7 e6 c0 8e 00			.byte 2,49,183,230,192,142,0           ; f>b  12345.6789
+>8007	0f					.byte 15                               ; b>a
+>8008	02 00 00 e4 c0 8e 00			.byte 2,0,0,228,192,142,0              ; f>b  12345
+>800f	04					.byte 4                                ; -
+>8010	02 f1 63 cc ad 80 00			.byte 2,241,99,204,173,128,0           ; f>b  0.6789
+>8017	04					.byte 4                                ; -
+>8018	0c					.byte 12                               ; ==0
+>8019	10					.byte 16                               ; halt
+
+;******  Return to file: test.asm
+
 >fffc	00 20						.word	Startup
 
 ;******  End of listing
