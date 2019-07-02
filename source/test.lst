@@ -1,0 +1,16 @@
+
+; 64tass Turbo Assembler Macro V1.54.1900 listing file
+; 64tass -a -b -c -o test.bin -L test.lst test.asm
+; Sat Jun 29 23:02:00 2019
+
+;Offset	;Hex		;Monitor	;Source
+
+;******  Processing input file: test.asm
+
+.0000	ea		nop				nop
+.2000	1a		inc a		Startup:inc	a
+.2001	ea		nop				nop
+.2002	80 fe		bra $2002	w1:		bra 	w1
+>fffc	00 20						.word	Startup
+
+;******  End of listing
