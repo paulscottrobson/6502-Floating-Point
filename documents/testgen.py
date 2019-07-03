@@ -17,7 +17,7 @@ def getFP():
 		return 0
 	if random.randint(0,5) == 0:
 		return random.randint(-20,20)
-	return random.randint(0,100000000) / 100000.0
+	return random.randint(0,10000000000.0) / 1000000.0
 
 if __name__ == "__main__":
 	cc = Compiler()

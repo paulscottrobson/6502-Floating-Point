@@ -54,7 +54,7 @@ _FA_TestZero:
 		;
 		;		Same sign, so add together. Sign of result is sign of either.
 		;
-		clc
+		clc		
 		lda 	fpa+0 						; add together.
 		adc 	fpb+0
 		sta 	fpa+0
@@ -81,7 +81,7 @@ _FA_NoShift:
 		lda 	fpa+3						; set bit 3.
 		ora 	#$80
 		sta 	fpa+3
-		rts
+		bra 	_FA_Exit
 		;
 		;		Add together when signs are different.
 		;
@@ -112,8 +112,8 @@ _FA_Normalize_Exit:
 		bne 	_FA_NonZero
 		sta 	fpaE 						; if so, zero the exponent as they are same number
 _FA_NonZero:		
-		jmp 	Float_NormalizeBoth
-
+		jsr 	Float_NormalizeBoth
+		bra 	_FA_Exit
 _FA_CopyBToA:
 		jsr 	Float_COPY_BToA
 _FA_Exit:
@@ -124,7 +124,7 @@ _FA_Exit:
 ;										copy FPB to FPA
 ;
 ; *******************************************************************************************
-
+	
 Float_COPY_BToA:
 		lda 	fpb+0
 		sta 	fpa+0		
@@ -202,7 +202,7 @@ _FAE_Loop:
 		;
 _FAE_Shift:		
 		;
-		lsr 	3,x
+		lsr 	3,x 						; shift exponent right.
 		ror 	2,x
 		ror 	1,x
 		ror 	0,x
@@ -216,6 +216,8 @@ _FAE_Exit:
 ; *******************************************************************************************
 ;
 ;								Negate the mantissa of fpa
+;
+;			JUST the mantissa - does not physically negate the floating point value.
 ;
 ; *******************************************************************************************
 
@@ -321,11 +323,10 @@ _FM_DoneMain:
 		ror 	fpa+1
 		ror 	fpa+0
 		inc 	fpaE
-_FM_Exit:
-		rts
-
+		bra 	_FM_Exit
 _FM_Zero:
 		stz 	fpaE 							; return zero.
+_FM_Exit:
 		rts
 
 ; *******************************************************************************************
