@@ -26,7 +26,7 @@ if __name__ == "__main__":
 	random.seed(seed)
 	print("Seed ",seed)
 	code = []
-	for i in range(0,600):
+	for i in range(0,500):
 		f1 = getFP()
 		f2 = getFP()
 		code.append(" f>b {0} b>a f>b {1} + f>b {2} - =0".format(f1,f2,f1+f2) )
@@ -36,6 +36,10 @@ if __name__ == "__main__":
 		f1 = getFP()
 		f2 = getFP()
 		code.append(" f>b {0} b>a f>b {1} * f>b {2} - =0".format(f1,f2,f1*f2) )
+		f1 = getFP()
+		f2 = getFP()
+		if f2 != 0.0:
+			code.append(" f>b {0} b>a f>b {1} / f>b {2} - =0".format(f1,f2,f1/f2) )
 #		print(code[-1])
 	h = open("code.inc","w")
 	h.write("\n".join(cc.compile(code)))

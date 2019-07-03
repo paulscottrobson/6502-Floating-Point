@@ -14,7 +14,7 @@
 		
 fpa		= $08 			; 6 byte mantissa/exponent/sign
 fpb		= $10			; 6 byte mantissa/exponent/sign
-fpWork  = $18			; 8 byte temporary work area
+fpWork  = $18			; 4 byte temporary work area (multiply and divide)
 
 fpBias  = 129			; float bias.
 

@@ -338,10 +338,11 @@ Float_DIV:
 		jsr 	Float_NormalizeBoth 			; normalize A & B
 		;
 		lda 	fpbE 							; division by zero ?
-		beq 	_FD_DivZero
+		bne 	_FD_NotDivZero
+		jmp 	EH_DivZero
+_FD_NotDivZero:		
 		lda 	fpaE 							; top zero?
 		beq 	_FD_Zero
-		nop
 		;
 		lda 	fpaE 							; exp = e.A-e.B+bias+1
 		sec
@@ -358,12 +359,6 @@ Float_DIV:
 		stz 	fpWork+1
 		stz 	fpWork+2
 		stz 	fpWork+3
-		;
-		stz 	fpWork+4 						; set bit shifter 4..7 to $40000000
-		stz 	fpWork+5
-		stz 	fpWork+6
-		lda 	#$40
-		sta 	fpWork+7
 		;
 		phy 									; do 31 times
 		ldy 	#31
@@ -390,27 +385,30 @@ _FD_Loop:
 		pla
 		sta 	fpa+0
 		;
-		clc
-		lda 	fpWork+4 						; add bit in.
-		adc 	fpWork+0
-		sta 	fpWork+0
-		lda 	fpWork+5
-		adc 	fpWork+1
-		sta 	fpWork+1
-		lda 	fpWork+6
-		adc 	fpWork+2
-		sta 	fpWork+2
-		lda 	fpWork+7
-		adc 	fpWork+3
+		lda 	fpWork+3 						; set top bit of result.
+		ora 	#$80
 		sta 	fpWork+3
 		;
-_FDNoSubtract:
+		bra 	_FDEndSub
+		;
+_FD_NoSubtract:
 		pla 									; can't subtract, throw away answers
 		pla
 		pla
 		;
 _FDEndSub:				
-
+		lsr 	fpb+3 							; shift mantissa B right
+		ror 	fpb+2
+		ror 	fpb+1
+		ror 	fpb+0
+		;
+		asl 	fpWork 							; 32 bit rotate result left
+		rol 	fpWork+1
+		rol 	fpWork+2
+		rol 	fpWork+3
+		bcc 	_FDNoCarryOut
+		inc 	fpWork 							; sets bit 0, completing the rotate.
+_FDNoCarryOut:		
 		dey 		
 		bne 	_FD_Loop
 		ply 
@@ -418,24 +416,21 @@ _FDEndSub:
 		clc
 		lda 	fpWork							; put result in fpa, add 1 and normalise.
 		adc 	#1
-		sta 	fpWork
+		sta 	fpa
 		lda 	fpWork+1
 		adc 	#0
-		sta 	fpWork+1
+		sta 	fpa+1
 		lda 	fpWork+2
 		adc 	#0
-		sta 	fpWork+2
+		sta 	fpa+2
 		lda 	fpWork+3
 		adc 	#0
-		sta 	fpWork+3
+		sta 	fpa+3
 		;		
 		jsr 	Float_NormalizeBoth
+_FD_Zero:
 		rts
 		;												
-_FD_DivZero:
-		jmp 	EH_DivZero
-_FD_Zero:
-		rts				
 
 
 
