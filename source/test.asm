@@ -11,11 +11,14 @@
 
 		* = 0
 		nop
-fpa		= $08
-fpb		= $10
-fpWork  = $18
-fpBias  = 129
+		
+fpa		= $08 			; 6 byte mantissa/exponent/sign
+fpb		= $10			; 6 byte mantissa/exponent/sign
+fpWork  = $18			; 8 byte temporary work area
 
+fpBias  = 129			; float bias.
+
+; *******************************************************************************************
 
 addr 	= $04
 
@@ -50,6 +53,7 @@ NoCarry:
 		.docmd 	cmd_add,Float_ADD	
 		.docmd 	cmd_sub,Float_SUB
 		.docmd 	cmd_mul,Float_MUL
+		.docmd 	cmd_div,Float_DIV
 		cmp 	#cmd_equal0
 		beq 	TestNearZero
 		cmp 	#cmd_exact0
@@ -104,10 +108,13 @@ _TNZAbs:
 		ldy 	addr+1
 		nop
 
+EH_Overflow:
+EH_DivZero:
 Stop:	bra 	Stop
 
+		* = $1200
 		.include "floatingpoint.asm"
-		* = $2000
+		* = $1800
 		.include "code.inc"
 		
 		* = $FFFC

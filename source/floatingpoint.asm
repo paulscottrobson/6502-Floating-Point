@@ -147,7 +147,7 @@ Float_COPY_BToA:
 ; *******************************************************************************************
 
 Float_Error:
-		bra 	Float_Error
+		jmp 	EH_Overflow
 
 ; *******************************************************************************************
 ;
@@ -327,3 +327,116 @@ _FM_Exit:
 _FM_Zero:
 		stz 	fpaE 							; return zero.
 		rts
+
+; *******************************************************************************************
+;
+;								divide FPB into FPA (signed)
+;
+; *******************************************************************************************
+
+Float_DIV:
+		jsr 	Float_NormalizeBoth 			; normalize A & B
+		;
+		lda 	fpbE 							; division by zero ?
+		beq 	_FD_DivZero
+		lda 	fpaE 							; top zero?
+		beq 	_FD_Zero
+		nop
+		;
+		lda 	fpaE 							; exp = e.A-e.B+bias+1
+		sec
+		sbc 	fpbE
+		clc
+		adc 	#(fpBias+1)
+		sta 	fpaE
+		;
+		lda 	fpaSign 						; work out sign.
+		eor 	fpbSign
+		sta 	fpaSign
+		;
+		stz 	fpWork 							; zero work 0..3 (result)
+		stz 	fpWork+1
+		stz 	fpWork+2
+		stz 	fpWork+3
+		;
+		stz 	fpWork+4 						; set bit shifter 4..7 to $40000000
+		stz 	fpWork+5
+		stz 	fpWork+6
+		lda 	#$40
+		sta 	fpWork+7
+		;
+		phy 									; do 31 times
+		ldy 	#31
+_FD_Loop:
+		sec
+		lda 	fpa+0 							; sub fpb from fpa, pushing lower bytes on stack
+		sbc 	fpb+0
+		pha
+		lda 	fpa+1
+		sbc 	fpb+1
+		pha
+		lda 	fpa+2
+		sbc 	fpb+2
+		pha
+		lda 	fpa+3
+		sbc 	fpb+3
+		bcc		_FD_NoSubtract
+		;
+		sta 	fpa+3 							; can subtract, write fpa back.
+		pla
+		sta 	fpa+2
+		pla
+		sta 	fpa+1
+		pla
+		sta 	fpa+0
+		;
+		clc
+		lda 	fpWork+4 						; add bit in.
+		adc 	fpWork+0
+		sta 	fpWork+0
+		lda 	fpWork+5
+		adc 	fpWork+1
+		sta 	fpWork+1
+		lda 	fpWork+6
+		adc 	fpWork+2
+		sta 	fpWork+2
+		lda 	fpWork+7
+		adc 	fpWork+3
+		sta 	fpWork+3
+		;
+_FDNoSubtract:
+		pla 									; can't subtract, throw away answers
+		pla
+		pla
+		;
+_FDEndSub:				
+
+		dey 		
+		bne 	_FD_Loop
+		ply 
+		;
+		clc
+		lda 	fpWork							; put result in fpa, add 1 and normalise.
+		adc 	#1
+		sta 	fpWork
+		lda 	fpWork+1
+		adc 	#0
+		sta 	fpWork+1
+		lda 	fpWork+2
+		adc 	#0
+		sta 	fpWork+2
+		lda 	fpWork+3
+		adc 	#0
+		sta 	fpWork+3
+		;		
+		jsr 	Float_NormalizeBoth
+		rts
+		;												
+_FD_DivZero:
+		jmp 	EH_DivZero
+_FD_Zero:
+		rts				
+
+
+
+		

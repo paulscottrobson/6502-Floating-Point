@@ -101,10 +101,9 @@ if __name__ == "__main__":
 	;
 	;		Test compiler 
 	;
-	f>b  9175582.77935  b>a
-	f>b  3881369.71784 *
-	f>b  35613829143303.27
-	=0		
+	f>b  4  b>a
+	f>b  2 /
+	f>b  1 =0		
 
 	""".split("\n")
 	cc = Compiler()
