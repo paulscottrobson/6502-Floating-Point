@@ -44,6 +44,7 @@ class SignedFloatingPoint(FloatingPoint):
 		if self.isMinus == fp2.isMinus:									# if signs the same.
 			self.mantissa = self.mantissa + fp2.mantissa 				# addSigned the mantissas together.
 			#
+
 			if self.mantissa > self.bitMask:							# no overflow (e.g. one is zero)
 				self.exponent += 1 										# increment exponent 
 				assert self.exponent < 256 								# out of range error

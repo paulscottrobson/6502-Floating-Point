@@ -13,6 +13,9 @@
 		nop
 fpa		= $08
 fpb		= $10
+fpWork  = $18
+fpBias  = 129
+
 
 addr 	= $04
 
@@ -46,6 +49,7 @@ NoCarry:
 		.docmd 	cmd_b_to_a,Float_COPY_BToA
 		.docmd 	cmd_add,Float_ADD	
 		.docmd 	cmd_sub,Float_SUB
+		.docmd 	cmd_mul,Float_MUL
 		cmp 	#cmd_equal0
 		beq 	TestNearZero
 		cmp 	#cmd_exact0
@@ -95,7 +99,6 @@ TestNearZero:
 _TNZAbs:		
 		cmp 	#$10
 		bcs 	CheckLoop
-		nop
 		lda 	#1
 		ldx 	addr
 		ldy 	addr+1

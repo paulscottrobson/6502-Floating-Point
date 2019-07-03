@@ -234,3 +234,96 @@ Float_NegateMantissa:
 		sbc 	fpa+3
 		sta 	fpa+3
 		rts
+
+; *******************************************************************************************
+;
+;								multiply FPA by FPB (signed)
+;
+; *******************************************************************************************
+
+Float_MUL:
+		jsr 	Float_NormalizeBoth 			; normalize A & B
+		;
+		lda 	fpaE 							; check either exponent is zero
+		beq 	_FM_Zero 						; because 0 * x = 0
+		lda 	fpbE 	
+		beq 	_FM_Zero
+		;
+		lda 	fpaE 							; new exponent = A.E - Bias + B.E
+		sec
+		sbc 	#fpBias 						
+		clc
+		adc 	fpbE 	
+		sta 	fpaE
+		;
+		lda 	fpaSign 						; work out sign.
+		eor 	fpbSign
+		sta 	fpaSign
+		;
+		stz 	fpWork 							; zero the upper part of the product (fpWork)
+		stz 	fpWork+1 						; the lower part is fpa's Mantissa
+		stz 	fpWork+2
+		stz 	fpWork+3 						; the adder is fpb's Mantissa
+		;
+		phy
+		ldy 	#32 							; do 32 times, except the last rotate.
+_FM_Loop:
+		lda 	fpa+0 							; check bit 0 of the product (word.Amantissa)
+		ror 	a 								
+		bcc 	_FM_NoAdd 						; if bit 0 clear, don't add, with carry clear
+		;
+		clc 									; add fpb.mantissa to the upper word of product		
+		lda 	fpb+0 
+		adc 	fpWork+0
+		sta 	fpWork+0
+		lda 	fpb+1
+		adc 	fpWork+1
+		sta 	fpWork+1
+		lda 	fpb+2 
+		adc 	fpWork+2
+		sta 	fpWork+2
+		lda 	fpb+3
+		adc 	fpWork+3
+		sta 	fpWork+3
+		;
+_FM_NoAdd:			
+		dey 									; done the last, but one.
+		beq 	_FM_DoneMain
+		;										; rotate the product right (64 bits)
+		ror 	fpWork+3 						; shifting in the carry - so no LSR here
+		ror 	fpWork+2
+		ror 	fpWork+1
+		ror 	fpWork+0
+		ror 	fpa+3
+		ror 	fpa+2
+		ror 	fpa+1
+		ror 	fpa+0
+		;
+		bra 	_FM_Loop
+		ply 
+		;
+_FM_DoneMain:
+		ply 									; restore Y
+		;
+		lda 	fpWork+0 						; put product.left in mantissa
+		sta 	fpa+0
+		lda 	fpWork+1
+		sta 	fpa+1
+		lda 	fpWork+2
+		sta 	fpa+2
+		lda 	fpWork+3
+		sta 	fpa+3
+		;
+		bcc 	_FM_Exit 						; no carry out of add, no fix up.
+
+		ror 	fpa+3 							; rotate that carry in.
+		ror 	fpa+2
+		ror 	fpa+1
+		ror 	fpa+0
+		inc 	fpaE
+_FM_Exit:
+		rts
+
+_FM_Zero:
+		stz 	fpaE 							; return zero.
+		rts
