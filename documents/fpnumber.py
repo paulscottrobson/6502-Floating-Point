@@ -128,16 +128,15 @@ class FloatingPoint(object):
 		self.normalize()									# Normalize
 		fp2.normalize()
 		self.exponent = self.exponent - fp2.exponent + self.bias + 1	# new exponent
-
-		bitAdder = self.signBit >> 1 						# start division bits-1 times
 		result = 0
 		for i in range(0,self.bitCount-1): 				
-			#print("{0:x} {1:x} {2:x}".format(self.mantissa,fp2.mantissa,bitAdder))
+			#print("{0:x} {1:x} {2:x}".format(self.mantissa,fp2.mantissa,result))
 			if self.mantissa >= fp2.mantissa:				# subtraction possible ? 
 				self.mantissa = self.mantissa-fp2.mantissa 	# do it, set the result bit.
-				result |= bitAdder 		
-			bitAdder = bitAdder >> 1 						# shift adder bit and mantissa right
+				result |= self.signBit 		
 			fp2.mantissa = fp2.mantissa >> 1
+															# straight 32 bit rotate.
+			result = ((result << 1) & self.bitMask) | ((result >> (self.bitCount-1)) & 1)
 
 		self.mantissa = result + 1 							# rounding up here gives better results
 		self.normalize()									# normal up normalise.
