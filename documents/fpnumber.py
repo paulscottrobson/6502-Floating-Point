@@ -127,14 +127,14 @@ class FloatingPoint(object):
 	def div(self,fp2):
 		self.normalize()									# Normalize
 		fp2.normalize()
-
 		self.exponent = self.exponent - fp2.exponent + self.bias + 1	# new exponent
 
 		bitAdder = self.signBit >> 1 						# start division bits-1 times
 		result = 0
 		for i in range(0,self.bitCount-1): 				
-			if self.mantissa > fp2.mantissa:				# subtraction possible ? 
-				self.mantissa -= fp2.mantissa 				# do it, set the result bit.
+			#print("{0:x} {1:x} {2:x}".format(self.mantissa,fp2.mantissa,bitAdder))
+			if self.mantissa >= fp2.mantissa:				# subtraction possible ? 
+				self.mantissa = self.mantissa-fp2.mantissa 	# do it, set the result bit.
 				result |= bitAdder 		
 			bitAdder = bitAdder >> 1 						# shift adder bit and mantissa right
 			fp2.mantissa = fp2.mantissa >> 1
@@ -286,9 +286,11 @@ class FloatingPoint(object):
 
 if __name__ == "__main__":
 	print("==================")
-	fp = FloatingPoint(2)
-	fp.fromString("42")
-	print(fp.state(),fp.toString())
-	fp.fromString(str(4823.34539))
-	print(fp.state(),fp.toString())
+	fp = FloatingPoint(42)
+	print(fp.state())
+	fp2 = FloatingPoint(2)	
+	print(fp2.state())
 	#
+	fp.div(fp2)
+	print(fp.state())
+	
