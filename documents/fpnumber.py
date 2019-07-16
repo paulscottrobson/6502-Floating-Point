@@ -32,8 +32,11 @@ class FloatingPoint(object):
 			self.exponent = 0
 			self.mantissa = 0
 			return
-		self.mantissa = value 								# mantissa = value
+		self.mantissa = int(value)							# mantissa = value
 		self.exponent = self.bias + self.bitCount - 1		# exponent = bias + bits - 1
+		while self.mantissa > 0xFFFFFFFF:
+			self.mantissa = self.mantissa >> 1
+			self.exponent = self.exponent+1
 		self.normalize()									# normalize it.
 		self.mantissa = int(self.mantissa) 					# round up and make integer.
 	#
@@ -285,11 +288,13 @@ class FloatingPoint(object):
 
 if __name__ == "__main__":
 	print("==================")
-	fp = FloatingPoint(42)
+	fp = FloatingPoint(237497)
 	print(fp.state())
-	fp2 = FloatingPoint(2)	
+	fp2 = FloatingPoint(51785)	
 	print(fp2.state())
 	#
-	fp.div(fp2)
+	fp.mul(fp2)
 	print(fp.state())
-	
+	print(237497*51785)
+	fp = FloatingPoint(12298782144)
+	print(fp.state())

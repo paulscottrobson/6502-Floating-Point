@@ -80,9 +80,11 @@ class Compiler(object):
 				else:
 					n = float(text[0])
 					fp = FloatingPoint(abs(n))					
+					#print(">>>",fp.state(),n)
 					sign = 0 if n >= 0 else 1
 					mantissa = fp.mantissa
 					exponent = fp.exponent
+					#print("{3} {0:x} {1:x} {2:x}".format(mantissa,mantissa >> 24,exponent,n))
 					text = text[1:]
 
 				mantissa &= 0xFFFFFFFF

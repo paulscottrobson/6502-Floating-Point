@@ -326,7 +326,7 @@ _FM_DoneMain:
 		bra 	_FM_Exit
 _FM_Zero:
 		stz 	fpaE 							; return zero.
-_FM_Exit:
+_FM_Exit:	
 		rts
 
 ; *******************************************************************************************
@@ -430,7 +430,7 @@ _FDNoCarryOut:
 		;		
 		jsr 	Float_NormalizeBoth
 _FD_Zero:
-
+	
 		rts
 		;												
 
