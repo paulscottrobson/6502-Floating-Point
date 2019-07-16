@@ -55,6 +55,7 @@ NoCarry:
 		.docmd 	cmd_mul,Float_MUL
 		.docmd 	cmd_div,Float_DIV
 		.docmd 	cmd_ftoi,Float_TOINT
+		.docmd 	cmd_itof,Float_TOFLOAT
 		cmp 	#cmd_equal0
 		beq 	TestNearZero
 		cmp 	#cmd_intexact	

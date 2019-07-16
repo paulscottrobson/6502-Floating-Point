@@ -17,7 +17,7 @@ def getFP():
 		return 0
 	if random.randint(0,5) == 0:
 		return random.randint(-20,20)
-	n = random.randint(0,10000000000.0) / 1000000.0
+	n = random.randint(0,1000000000000.0) / 1000000.0
 	if random.randint(0,8) == 0:
 		n = int(n)
 	if random.randint(0,1) == 0:
@@ -32,7 +32,7 @@ if __name__ == "__main__":
 	random.seed(seed)
 	print("Seed ",seed)
 	code = []
-	for i in range(0,400):
+	for i in range(0,20):
 		f1 = getFP()
 		f2 = getFP()
 		code.append(" f>b {0} b>a f>b {1} + f>b {2} - =0".format(f1,f2,f1+f2) )
@@ -43,18 +43,19 @@ if __name__ == "__main__":
 		#
 		f1 = getFP()
 		f2 = getFP()
+		print(f1,f2,f1*f2)
 		code.append(" f>b {0} b>a f>b {1} * f>b {2} - =0".format(f1,f2,f1*f2) )
 		#
 		f1 = getFP()
 		f2 = getFP()
 		if f2 != 0.0:
 			code.append(" f>b {0} b>a f>b {1} / f>b {2} - =0".format(f1,f2,f1/f2) )
-		#
+		
 		f1 = getFP()
 		code.append("f>b {0} b>a ftoi i>b {1} int==".format(f1,int(f1)))
 		#
-		#f1 = getFP()
-		#code.append("i>b {1} b>a itof f>b {1} - =0".format(f1,int(f1)))
+		f1 = getFP()
+		code.append("i>b {1} b>a itof f>b {1} - =0".format(f1,int(f1)))
 
 	h = open("code.inc","w")
 	h.write("\n".join(cc.compile(code)))

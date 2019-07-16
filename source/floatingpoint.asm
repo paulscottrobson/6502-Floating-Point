@@ -476,3 +476,21 @@ Float_CalculateIntegerShift:
 		sec
 		sbc 	fpaE 							; - exponent
 		rts
+
+; *******************************************************************************************
+;
+;									Integer -> Float
+;
+; *******************************************************************************************
+
+Float_TOFLOAT:
+		stz 	fpaSign							; clear the sign
+		lda 	#fpBias+32-1 					; set the exponent
+		sta 	fpaE 							
+		lda 	fpa+3 							; is it -ve ?
+		bpl 	_FTFPositive
+		inc 	fpaSign 						; set the sign bit
+		jsr 	Float_NegateMantissa
+		jsr 	Float_NormalizeBoth
+_FTFPositive:
+		rts		
