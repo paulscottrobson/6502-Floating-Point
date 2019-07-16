@@ -430,9 +430,49 @@ _FDNoCarryOut:
 		;		
 		jsr 	Float_NormalizeBoth
 _FD_Zero:
+
 		rts
 		;												
 
 
+; *******************************************************************************************
+;
+;								  Float -> integer
+;
+; *******************************************************************************************
 
-		
+Float_TOINT:
+		jsr 	Float_CalculateIntegerShift 	; calculate/test integer right shift.
+		stz 	fpaE 							; zero the exponent anyway.
+		cmp 	#32 							; if too many, return zero.
+		bcs 	_FTIZero 						 		
+		phx 									; put into X
+		tax
+		beq 	_FTIDone
+_FTIShift: 										; right shift that many times
+		lsr 	fpa+3
+		ror 	fpa+2
+		ror 	fpa+1
+		ror 	fpa+0
+		dex
+		bne 	_FTIShift
+_FTIDone:
+		lda 	fpaSign
+		beq 	_FTINotNegative
+		stz 	fpaSign
+		jsr 	Float_NegateMantissa
+_FTINotNegative:		
+		plx 									; restore X	and exit.
+		rts
+_FTIZero:	
+		stz 	fpa+0 							; return zero.
+		stz 	fpa+1
+		stz 	fpa+2
+		stz 	fpa+3
+		rts
+
+Float_CalculateIntegerShift:
+		lda 	#(fpBias+32-1) 					; bias + bitcount - 1
+		sec
+		sbc 	fpaE 							; - exponent
+		rts

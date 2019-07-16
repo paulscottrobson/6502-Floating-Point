@@ -26,7 +26,7 @@ docmd 	.macro
 		cmp 	#\1
 		bne 	Skip_\2
 		jsr 	\2
-		bra 	CheckLoop
+		jmp 	CheckLoop
 Skip_\2:
 		.endm
 
@@ -54,10 +54,11 @@ NoCarry:
 		.docmd 	cmd_sub,Float_SUB
 		.docmd 	cmd_mul,Float_MUL
 		.docmd 	cmd_div,Float_DIV
+		.docmd 	cmd_ftoi,Float_TOINT
 		cmp 	#cmd_equal0
 		beq 	TestNearZero
-		cmp 	#cmd_exact0
-		beq 	TestZero
+		cmp 	#cmd_intexact	
+		beq 	TestEqualInt
 		cmp 	#cmd_halt
 Error:		
 		bne 	Error		
@@ -74,19 +75,32 @@ _CILoop:lda 	(addr),y
 		clc
 		adc 	#6
 		sta 	addr
-		bcc 	CheckLoop
+		bcc 	GoCheckLoop
 		inc 	addr+1
-		bra 	CheckLoop
+GoCheckLoop:		
+		jmp 	CheckLoop
 
 w1:		bra 	w1			
 		;
-		;		Check exactly zero, e.g. exponent = 0
+		;		Check exactly same e.g. integer equivalence.
 		;
-TestZero:
-		lda 	fpa+4 	
-		beq 	CheckLoop
+TestEqualInt:
+		lda 	fpa+3
+		cmp 	fpb+3
+		bne 	ZeroFail
+		lda 	fpa+2
+		cmp 	fpb+2
+		bne 	ZeroFail
+		lda 	fpa+1
+		cmp 	fpb+1
+		bne 	ZeroFail
+		lda 	fpa+0
+		cmp 	fpb+0	
+		bne 	ZeroFail
+		jmp 	GoCheckLoop
+ZeroFail:		
 		lda 	#0
-		ldx 	addr
+		ldx 	addr	
 		ldy 	addr+1
 		nop
 		;
@@ -94,15 +108,15 @@ TestZero:
 		;
 TestNearZero:		
 		lda 	fpa+4
-		beq 	CheckLoop
+		beq 	GoCheckLoop
 		sec
 		sbc 	fpb+4
 		bpl 	_TNZAbs
 		eor 	#$FF
 		inc 	a
 _TNZAbs:		
-		cmp 	#$10
-		bcs 	CheckLoop
+		cmp 	#$0C
+		bcs 	GoCheckLoop
 		lda 	#1
 		ldx 	addr
 		ldy 	addr+1

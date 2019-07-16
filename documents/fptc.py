@@ -33,7 +33,7 @@ class Compiler(object):
 		self.commands["ftoi"] = { "name":"ftoi" }	# convert fpb:float -> int
 
 		self.commands["=0"] = { "name":"=0"}		# true if fpa nearly equal to 0
-		self.commands["==0"] = { "name":"==0" }		# true if fpa exactly equal to 0
+		self.commands["int=="] = { "name":"int==" }	# true if int(a) = int(b)
 
 		self.commands["a>$"] = { "name":"a>$" }		# copy a to buffer as string constant
 		self.commands["$>a"] = { "name":"$>a"}		# copy string constant to a as float.
@@ -60,7 +60,9 @@ class Compiler(object):
 			name = name.replace("=","equal").replace("$","buffer")
 			name = name.replace("+","add").replace("-","sub").replace("*","mul").replace("/","div")
 			src.append("cmd_{0} = {1}".format(name,self.commands[c]["command"]))
+		#
 		src.append("\n\nFPCode:")
+		#
 		while len(text) != 0:
 			byte = []			
 			assert text[0] in self.commands,"Don't know {0}".format(text[0])
