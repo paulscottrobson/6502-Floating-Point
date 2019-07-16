@@ -33,23 +33,23 @@ if __name__ == "__main__":
 	print("Seed ",seed)
 	code = []
 	for i in range(0,400):
-	# 	f1 = getFP()
-	# 	f2 = getFP()
-	# 	code.append(" f>b {0} b>a f>b {1} + f>b {2} - =0".format(f1,f2,f1+f2) )
-	# 	#
-	# 	f1 = getFP()
-	# 	f2 = getFP()
-	# 	code.append(" f>b {0} b>a f>b {1} - f>b {2} - =0".format(f1,f2,f1-f2) )
-	# 	#
-	# 	f1 = getFP()
-	# 	f2 = getFP()
-	# 	code.append(" f>b {0} b>a f>b {1} * f>b {2} - =0".format(f1,f2,f1*f2) )
-	# 	#
-	# 	f1 = getFP()
-	# 	f2 = getFP()
-	# 	if f2 != 0.0:
-	# 		code.append(" f>b {0} b>a f>b {1} / f>b {2} - =0".format(f1,f2,f1/f2) )
-		
+		f1 = getFP()
+		f2 = getFP()
+		code.append(" f>b {0} b>a f>b {1} + f>b {2} - =0".format(f1,f2,f1+f2) )
+		#
+		f1 = getFP()
+		f2 = getFP()
+		code.append(" f>b {0} b>a f>b {1} - f>b {2} - =0".format(f1,f2,f1-f2) )
+		#
+		f1 = getFP()
+		f2 = getFP()
+		code.append(" f>b {0} b>a f>b {1} * f>b {2} - =0".format(f1,f2,f1*f2) )
+		#
+		f1 = getFP()
+		f2 = getFP()
+		if f2 != 0.0:
+			code.append(" f>b {0} b>a f>b {1} / f>b {2} - =0".format(f1,f2,f1/f2) )
+		#
 		f1 = getFP()
 		code.append("f>b {0} b>a ftoi i>b {1} int==".format(f1,int(f1)))
 		#
